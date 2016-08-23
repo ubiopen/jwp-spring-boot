@@ -4,12 +4,12 @@ import java.util.List;
 import java.util.Map;
 
 import next.CannotOperateException;
-import next.dao.AnswerDao;
-import next.dao.QuestionDao;
 import next.model.Answer;
 import next.model.Question;
 import next.model.Result;
 import next.model.User;
+import next.repositories.AnswerRepository;
+import next.repositories.QuestionRepository;
 import next.service.QnaService;
 
 import org.slf4j.Logger;
@@ -31,9 +31,9 @@ public class ApiQuestionController {
 	private Logger log = LoggerFactory.getLogger(ApiQuestionController.class);
 	
 	@Autowired
-	private QuestionDao questionDao;
+	private QuestionRepository questionRepository;
 	@Autowired
-	private AnswerDao answerDao;
+	private AnswerRepository answerRepository;
 	@Autowired
 	private QnaService qnaService;
 	
@@ -49,7 +49,7 @@ public class ApiQuestionController {
 	
 	@RequestMapping(value = "", method = RequestMethod.GET)
 	public List<Question> list() throws Exception {
-		return questionDao.findAll();
+		return questionRepository.findAll();
 	}
 	
 	@RequestMapping(value = "/{questionId}/answers", method = RequestMethod.POST)
@@ -57,8 +57,8 @@ public class ApiQuestionController {
 		log.debug("questionId : {}, contents : {}", questionId, contents);
     	Map<String, Object> values = Maps.newHashMap();
     	Answer answer = new Answer(loginUser.getUserId(), contents, questionId);
-    	Answer savedAnswer = answerDao.insert(answer);
-		questionDao.updateCountOfAnswer(savedAnswer.getQuestionId());
+    	Answer savedAnswer = answerRepository.save(answer);
+//    	questionRepository.updateCountOfAnswer(savedAnswer.getQuestionId());
 		
 		values.put("answer", savedAnswer);
 		values.put("result", Result.ok());
@@ -67,13 +67,14 @@ public class ApiQuestionController {
 	
 	@RequestMapping(value = "/{questionId}/answers/{answerId}", method = RequestMethod.DELETE)
 	public Result deleteAnswer(@LoginUser User loginUser, @PathVariable long answerId) throws Exception {
-		Answer answer = answerDao.findById(answerId);
+
+		Answer answer = answerRepository.getOne(answerId);
 		if (!answer.isSameUser(loginUser)) {
 			return Result.fail("다른 사용자가 쓴 글을 삭제할 수 없습니다.");
 		}
 		
 		try {
-			answerDao.delete(answerId);
+			answerRepository.delete(answer);
 			return Result.ok();
 		} catch (DataAccessException e) {
 			return Result.fail(e.getMessage());

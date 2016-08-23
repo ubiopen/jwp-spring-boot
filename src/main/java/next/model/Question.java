@@ -1,11 +1,29 @@
 package next.model;
 
 import java.util.Date;
+import java.util.List;
 
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ForeignKey;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OrderBy;
+
+@Entity
 public class Question {
+	
+	@Id
+    @GeneratedValue(strategy=GenerationType.AUTO)
 	private long questionId;
 
-	private String writer;
+	@ManyToOne
+	@JoinColumn(foreignKey = @ForeignKey(name = "fk_question_writer"))
+	private User writer;
 
 	private String title;
 
@@ -13,6 +31,10 @@ public class Question {
 
 	private Date createdDate;
 
+	@OneToMany(mappedBy = "question", fetch = FetchType.LAZY)
+	@OrderBy("answerId ASC")
+	private List<Answer> answers;
+	
 	private int countOfComment;
 
 	public Question() {
@@ -25,11 +47,25 @@ public class Question {
 	public Question(long questionId, String writer, String title, String contents, Date createdDate,
 			int countOfComment) {
 		this.questionId = questionId;
-		this.writer = writer;
 		this.title = title;
 		this.contents = contents;
 		this.createdDate = createdDate;
+	}
+	
+	public int getCountOfComment() {
+		return countOfComment;
+	}
+
+	public void setCountOfComment(int countOfComment) {
 		this.countOfComment = countOfComment;
+	}
+
+	public User getWriter() {
+		return writer;
+	}
+
+	public void setWriter(User writer) {
+		this.writer = writer;
 	}
 
 	public long getQuestionId() {
@@ -56,10 +92,6 @@ public class Question {
 		this.contents = contents;
 	}
 
-	public String getWriter() {
-		return writer;
-	}
-
 	public Date getCreatedDate() {
 		return createdDate;
 	}
@@ -68,10 +100,6 @@ public class Question {
 		return this.createdDate.getTime();
 	}
 
-	public int getCountOfComment() {
-		return countOfComment;
-	}
-	
 	public Question newQuestion(User user) {
 		return new Question(user.getUserId(), title, contents);
 	}
@@ -88,7 +116,7 @@ public class Question {
 	@Override
 	public String toString() {
 		return "Question [questionId=" + questionId + ", writer=" + writer + ", title=" + title + ", contents="
-				+ contents + ", createdDate=" + createdDate + ", countOfComment=" + countOfComment + "]";
+				+ contents + ", createdDate=" + createdDate + ", countOfComment=" + answers.size() + "]";
 	}
 
 	@Override
